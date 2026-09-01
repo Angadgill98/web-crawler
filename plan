@@ -1,0 +1,106 @@
+Identifying the volatile and involatle
+    get the staic page html
+
+    laod it 10 times adn comapre the hashes
+
+    the hashse we comapre can be of the eihter whoel page or individault  tags
+
+    so to ahash a particalur tag make a function wich finds the opening adn clsoing of teh tag and ahshes the conte inde it what we can do is that 
+    we can ahsh from teh middle and as we  cover th aprent we jsut use teh childern hash a dn collec them adn for the liek text without adny tag 
+
+    so need to bui;lda dom tree oarse whic takes the thml adn give strcu whic i can access structurally
+
+
+    so what we cnow do is taht we send tags in abthces adn we check if they cleiking on tehm chanegt eh dom so absically it is dependecy findings 
+    so after ifnding teh dpeendcy we can pass the curernt witht isntrcut adn as then instrcut it to start from tehre this allwos us to explore teh other info
+
+    
+
+
+
+                             USER
+                           │
+                           │ URL
+                           ▼
+                  ┌─────────────────┐
+                  │ Initial Task    │
+                  │ URL             │
+                  │ instructions=[] │
+                  └────────┬────────┘
+                           │
+                           ▼
+                 ┌───────────────────┐
+                 │  Static Page Load │
+                 │       ×10         │
+                 └─────────┬─────────┘
+                           │
+                           ▼
+                10 HTML Snapshots
+                           │
+                           ▼
+                 Parse into DOM trees
+                           │
+                           ▼
+              Compare corresponding nodes
+                           │
+                 ┌─────────┴─────────┐
+                 ▼                   ▼
+             STABLE              VOLATILE
+                 │                   │
+                 └─────────┬─────────┘
+                           ▼
+              Annotated Structured DOM
+                           │
+                           │
+                           ▼
+              Find Candidate Elements
+                           │
+              ┌────────────┴────────────┐
+              ▼                         ▼
+          <a href>                 onclick / click
+              │                         │
+              └────────────┬────────────┘
+                           ▼
+                   Candidate Elements
+                           │
+                           ▼
+                    Batch the elements
+                           │
+                           ▼
+                     Click batch
+                           │
+                           ▼
+                  Compare page state
+                 before vs after
+                           │
+                 ┌─────────┴─────────┐
+                 ▼                   ▼
+             NO CHANGE            CHANGE
+                 │                   │
+                 ▼                   ▼
+            discard batch       split batch
+                                     │
+                                     ▼
+                              repeat until
+                              element isolated
+                                     │
+                                     ▼
+                            Element dependency
+                                     │
+                                     ▼
+                       ┌─────────────┴─────────────┐
+                       ▼                           ▼
+                 DOM/state change              URL change
+                       │                           │
+                       ▼                           ▼
+                 New page state               New URL
+                       │                           │
+                       └─────────────┬─────────────┘
+                                     ▼
+                              Create new Task
+                                     │
+                                     ▼
+                                   QUEUE
+                                     │
+                                     ▼
+                                  REPEAT

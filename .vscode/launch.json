@@ -1,0 +1,22 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Linux - Launch Backend",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "${workspaceFolder}/backend/bin/Debug/net8.0/backend",
+            "preLaunchTask": "build-backend",
+            "env": {
+                "DOTNET_ROOT": "/snap/dotnet-sdk/256",
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            },
+            "linux": {
+                "env": {
+                    "DOTNET_ROOT": "/snap/dotnet-sdk/256",
+                    "ASPNETCORE_ENVIRONMENT": "Development"
+                }
+            }
+        }
+    ]
+}
