@@ -11,6 +11,7 @@ public class Crawler
 
     playwright_worker_dispatcher playwright_dispatcher;//may injection
     http_worker http_dispatcher;//may injection
+    Parser parser=new();
 
     public Crawler(){
         int playwright_workers_count=1;//yahe
@@ -39,7 +40,16 @@ public class Crawler
             }
         }
 
-        Console.WriteLine($"{responses}");
+        //parsing the static html
+        List<JsonTree> jsontrees=new();
+        foreach (var res in responses)
+        {
+            var json=this.parser.parse_pipeline(res);
+            jsontrees.Add(json);
+        }
+
+
+
         
         
         //this is for after we deied what is volatile adn non-v
@@ -70,7 +80,14 @@ public class Crawler
         return (req_list, receivers);
     } 
 
+    void CompareJsonTreeHashes(List<JsonTree> json)
+    {
+        
+    }
+
 }
+
+
 
 
 public struct static_req
