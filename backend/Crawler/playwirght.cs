@@ -8,8 +8,8 @@ using Microsoft.Playwright;
 //would be plawright class but constructor cant haev async so we use another function to intialize the oalywirght object
 public class PlaywrightManager
 {
-    int browser_count;//yahe
-    int tab_count;//yahe
+    int browser_count=1;//yahe
+    int tab_count=4;//yahe
 
     int current_browser_index=0;
 
@@ -27,6 +27,11 @@ public class PlaywrightManager
     {
         var playwright=await Playwright.CreateAsync();
         this.playwright=playwright;
+
+        for (int i = 0; i < this.browser_count; i++)
+        {
+            await this.Openbrowser(i);
+        }
     }
 
     async Task Openbrowser(int id)
@@ -57,10 +62,11 @@ public class PlaywrightManager
 
     }
 
-    public Browser GetBrowser()
+    public async Task<Browser> GetBrowser()
     {
         var browser_id=current_browser_index%this.browser_count;
         var browser=this.browsers[browser_id];
+
         this.current_browser_index++;
         return browser;
     }
@@ -68,7 +74,7 @@ public class PlaywrightManager
     public async Task<Tab> AcquireTabLock(Browser browser)
     {
         var tabs=browser.tabs;
-
+        Console.WriteLine("wating for tab lcok");
         while (true)
         {
             foreach (Tab tab in tabs)
@@ -77,6 +83,8 @@ public class PlaywrightManager
 
                 if (acquired)
                 {
+                    Console.WriteLine("got the tab lcok");
+
                     return tab; 
                 }
             }
@@ -107,5 +115,14 @@ public class Tab
     public Tab(IPage page)
     {
         this.tab=page;
+    }
+
+    public async Task<string> OpenURL(string url)
+    {
+        await tab.GotoAsync(url);
+
+        string html = await tab.ContentAsync();
+
+        return html;
     }
 }

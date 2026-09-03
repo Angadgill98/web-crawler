@@ -5,11 +5,11 @@ using System.Threading.Channels;
 public class http_worker
 {
     HttpClient http=new HttpClient();//injection
-    private readonly ChannelWriter<static_req> dispatcher;
+    private readonly ChannelWriter<req> dispatcher;
 
-    private readonly List<ChannelWriter<static_req>> workers = [];
+    private readonly List<ChannelWriter<req>> workers = [];
 
-    private readonly ChannelReader<static_req> queue;
+    private readonly ChannelReader<req> queue;
 
     private readonly int worker_count;
 
@@ -25,7 +25,7 @@ public class http_worker
         }
 
         // Create dispatcher queue
-        var channel = Channel.CreateUnbounded<static_req>();
+        var channel = Channel.CreateUnbounded<req>();
 
         this.dispatcher = channel.Writer;
         this.queue = channel.Reader;
@@ -39,6 +39,7 @@ public class http_worker
         {
             await foreach (var req in this.queue.ReadAllAsync())
             {
+                
                 await this.workers[currentWorkerIndex].WriteAsync(req);
 
                 currentWorkerIndex =(currentWorkerIndex + 1) % this.worker_count;
@@ -46,17 +47,15 @@ public class http_worker
         });
     }
 
-    public async Task Send(List<static_req> reqs)
+    public async Task Send(req reqs)
     {
-        foreach (var req in reqs)
-        {
-            await this.dispatcher.WriteAsync(req);
-        }
+       
+        await this.dispatcher.WriteAsync(reqs);
     }
 
-    private ChannelWriter<static_req> CreateWorker()
+    private ChannelWriter<req> CreateWorker()
     {
-        var channel = Channel.CreateUnbounded<static_req>();
+        var channel = Channel.CreateUnbounded<req>();
 
         var sender = channel.Writer;
         var reader = channel.Reader;
@@ -72,7 +71,7 @@ public class http_worker
 
                 string static_html =await response.Content.ReadAsStringAsync();
 
-                req.static_run_complete_signal.SetResult(static_html);
+                req.crawler_html_complete_signal.SetResult(static_html);
             }
         });
 

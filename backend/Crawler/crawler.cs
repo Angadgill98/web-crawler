@@ -17,85 +17,161 @@ public class Crawler
         int playwright_workers_count=1;//yahe
         this.playwright_dispatcher=new playwright_worker_dispatcher(playwright_workers_count);
         this.playwright_dispatcher.StartDispatcher();
+        
 
         int http_workers_count=1;//yahe
 
         this.http_dispatcher=new http_worker(http_workers_count);
         this.http_dispatcher.StartDispatcher();
+
+
     }
 
-    public async Task StartCrawl(string url)
+    public async Task<(req,List<string>)> StartCrawl(req req)
     {
-        int req_runs=1;//yahe
-        var (req_list,receivers)=this.PrepStaticList(url,req_runs);
+        var html_sender=new TaskCompletionSource<string>();
+        var html_receiver=html_sender.Task;
 
-        //now we got teh static html form teh url this  
-        await this.http_dispatcher.Send(req_list);
-        List<string> responses=[];
-        { //collect teh responses
-            foreach (var req in req_list)
+        string html;
+        req.crawler_html_complete_signal=html_sender;
+        switch (req.mode)
+        {
+            //now we got teh html form teh url this will send it http for static content 
+            case "http":
+                await this.http_dispatcher.Send(req);
+                break;
+            
+            //now we got teh html form teh url this wills end it to playeithgt adn get html+js
+            case "js":
+                await this.playwright_dispatcher.Send(req);
+                break;
+            
+            default:
+                break;
+
+        }
+
+    
+        html=await html_receiver;
+
+        //parsing the html            
+        var json=this.parser.parse_pipeline(html);
+        Dictionary<string, List<JsonTree>> map = new();
+        json.CreateElementHashMap(map);
+
+        req.elements=json;
+
+        var a_tag_elements=map["a"];
+
+        List<string> discovered_urls=this.ExtractHrefLink(a_tag_elements);
+
+        List<string> urls_to_crawl= this.CreateFullUrls(discovered_urls,req.url);
+
+
+        
+
+        req.discovered_urls.UnionWith(urls_to_crawl);
+
+        return (req,urls_to_crawl);
+
+    }
+
+    List<string> ExtractHrefLink(List<JsonTree> a_tag)
+    {
+        List<string> links = new();
+
+        foreach (var element in a_tag)
+        {
+            string content = element.content;
+
+            int hrefIndex = content.IndexOf("href",StringComparison.OrdinalIgnoreCase);
+
+            if (hrefIndex == -1)
+                continue;
+
+            int equalsIndex = content.IndexOf('=', hrefIndex);
+
+            if (equalsIndex == -1)
+                continue;
+
+            int start = equalsIndex + 1;
+
+            // Skip spaces after =
+            while (start < content.Length && char.IsWhiteSpace(content[start]))
             {
-                string result= await req.static_run_complete_signal.Task;
-                responses.Add(result);
+                start++;
+            }
+
+            if (start >= content.Length)
+                continue;
+
+            char quote = content[start];
+
+            if (quote == '"' || quote == '\'')
+            {
+                start++;
+
+                int end = content.IndexOf(quote, start);
+
+                if (end == -1)
+                    continue;
+
+                string href = content.Substring(
+                    start,
+                    end - start
+                );
+
+                links.Add(href);
             }
         }
 
-        //parsing the static html
-        List<JsonTree> jsontrees=new();
-        foreach (var res in responses)
-        {
-            var json=this.parser.parse_pipeline(res);
-            jsontrees.Add(json);
-        }
-
-
-
-        
-        
-        //this is for after we deied what is volatile adn non-v
-        //to-decied:reqlist struct to change follows teh static struct 
-        // await this.playwright_dispatcher.Send(req_list);
-
-
+        return links;
     }
 
-    (List<static_req> req_list, List<Task<string>> receivers)  PrepStaticList(string url,int req_runs)
+    List<string> CreateFullUrls(List<string> extractedUrls,string requestUrl)
     {
-        var req_list=new List<static_req>();
-        var receivers=new List< System.Threading.Tasks.Task<string>>();
-        foreach (var i in Enumerable.Range(0,req_runs))
+        List<string> fullUrls = new();
+
+        foreach (var url in extractedUrls)
         {
-            var job_singaler=new TaskCompletionSource<string>();
-            var job_waiting_signal=job_singaler.Task;
+            Uri baseUri = new Uri(requestUrl);
+            Uri fullUri = new Uri(baseUri, url);
 
-            var req=new static_req();
-            req.url=url;
-            req.static_run_complete_signal=job_singaler;
-            req.instructions=[];
-
-            req_list.Add(req);
-            receivers.Add(job_waiting_signal);
+            fullUrls.Add(fullUri.ToString());
         }
 
-        return (req_list, receivers);
-    } 
-
-    void CompareJsonTreeHashes(List<JsonTree> json)
-    {
-        
+        return fullUrls;
     }
+
+
+    //function from t
+    // public req PrepCrawlerReq(string url,int crawler_runs,string mode)
+    // {
+    //     var req=new req();
+    //     req.url=url;
+    //     req.discovered_urls=[];
+    //     req.crawler_run=crawler_runs;
+    //     req.mode=mode;
+
+    //     return req;
+    // } 
+
 
 }
 
 
 
 
-public struct static_req
+public struct req
 {
-    public string url;
-    public System.Threading.Tasks.TaskCompletionSource<string> static_run_complete_signal;
+    public string url { get; set; }
+    public TaskCompletionSource<string> crawler_html_complete_signal { get; set; }
+    public HashSet<string> discovered_urls { get; set; }
+    public int crawler_run { get; set; }
+    public string mode { get; set; }
 
-    public List<String> instructions;
+    public JsonTree elements { get; set; }
+
 }
 
 

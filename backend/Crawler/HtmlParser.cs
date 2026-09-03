@@ -179,7 +179,7 @@ public class Parser
 
         foreach (var element in elementCount)
         {
-            Console.WriteLine($"{element.Key}: {element.Value}");
+            // Console.WriteLine($"{element.Key}: {element.Value}");
         }
     }
    
@@ -239,7 +239,7 @@ public class Parser
 
     void InitTree(Node node,Queue<tag> queue)
     {   
-        Console.WriteLine($"{node.name}");
+        // Console.WriteLine($"{node.name}");
 
         if (queue.Count==0)
         {
@@ -368,13 +368,13 @@ class Node
 
 public class JsonTree
 {
-    public string name;
+    public string name  { get; set; }
 
-    public string content;
+    public string content { get; set; }
 
-    public string content_hash;
+    public string content_hash { get; set; }
 
-    public List<JsonTree> children;
+    public List<JsonTree> children { get; set; }
 
     public JsonTree()
     {
