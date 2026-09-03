@@ -1,1 +1,10 @@
 dotnet watch run
+
+
+
+use the swagger for to show the resposne and the params editing 
+5000 for debugger 
+5084 for noram watch run
+
+
+https://books.toscrape.com/
